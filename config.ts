@@ -1,21 +1,3 @@
-const fs = require('fs');
-
-const envPresence = {
-  SECRET: !!process.env.SECRET,
-  DB_HOST: !!process.env.DB_HOST,
-  DB_PORT: !!process.env.DB_PORT,
-  DB_USER: !!process.env.DB_USER,
-  DB_PASSWORD: !!process.env.DB_PASSWORD,
-  DB_NAME: !!process.env.DB_NAME,
-  CORS_ORIGIN: !!process.env.CORS_ORIGIN,
-  SMTP_HOST: !!process.env.SMTP_HOST,
-  SMTP_PORT: !!process.env.SMTP_PORT,
-  SMTP_USER: !!process.env.SMTP_USER,
-  SMTP_PASS: !!process.env.SMTP_PASS,
-  EMAIL_FROM: !!process.env.EMAIL_FROM
-};
-console.log('generate-config env present:', envPresence);
-
 const config = {
   secret: process.env.SECRET || 'YOUR_SECRET_HERE',
   database: {
@@ -37,5 +19,4 @@ const config = {
   emailFrom: process.env.EMAIL_FROM || 'no-reply@example.com'
 };
 
-fs.writeFileSync('./config.json', JSON.stringify(config, null, 2));
-console.log('config.json generated successfully');
+export default config;

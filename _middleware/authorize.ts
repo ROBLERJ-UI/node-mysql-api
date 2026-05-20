@@ -1,6 +1,6 @@
 import { expressjwt } from 'express-jwt';
 import db from '../_helpers/db';
-import config from '../config.json';
+import config from '../config';
 
 const { secret } = config;
 

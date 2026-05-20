@@ -31,6 +31,11 @@ app.use('/api-docs', swaggerUi.serve);
 
 app.use(errorHandler);
 
+app.use(cors({ 
+  origin: process.env.CORS_ORIGIN || 'http://localhost:4200', 
+  credentials: true 
+}));
+
 // Only listen locally, NOT on Vercel
 if (process.env.NODE_ENV !== 'production') {
   app.listen(4000, () => console.log('Server listening on port 4000'));

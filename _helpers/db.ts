@@ -7,26 +7,35 @@ import refreshTokenModel from '../accounts/refresh-token.model';
 const db: any = {};
 export default db;
 
-initialize();
+// initialize but don't let unhandled rejections crash the function; log instead
+initialize().catch((err: any) => console.error('DB initialize failed (unhandled):', err));
 
 async function initialize() {
-    const { host, port, user, password, database } = config.database;
-    const connection = await mysql.createConnection({ host, port, user, password });
+    try {
+        const { host, port, user, password, database } = config.database;
+        console.log('DB initialize: host=', host, 'port=', port, 'database=', database);
 
-    // Create DB if it doesn't exist
-    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
+        const connection = await mysql.createConnection({ host, port, user, password });
 
-    // Connect to DB
-    const sequelize = new Sequelize(database, user, password, { dialect: 'mysql' });
+        // Create DB if it doesn't exist
+        await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
 
-    // Init models
-    db.Account = accountModel(sequelize);
-    db.RefreshToken = refreshTokenModel(sequelize);
+        // Connect to DB
+        const sequelize = new Sequelize(database, user, password, { dialect: 'mysql' });
 
-    // Define relationships
-    db.Account.hasMany(db.RefreshToken, { onDelete: 'CASCADE' });
-    db.RefreshToken.belongsTo(db.Account);
+        // Init models
+        db.Account = accountModel(sequelize);
+        db.RefreshToken = refreshTokenModel(sequelize);
 
-    // Sync models with database
-    await sequelize.sync();
+        // Define relationships
+        db.Account.hasMany(db.RefreshToken, { onDelete: 'CASCADE' });
+        db.RefreshToken.belongsTo(db.Account);
+
+        // Sync models with database
+        await sequelize.sync();
+        console.log('DB initialized and synced');
+    } catch (err) {
+        console.error('DB initialize error:', err && err.message ? err.message : err);
+        // Do not rethrow to avoid crashing serverless function startup
+    }
 }

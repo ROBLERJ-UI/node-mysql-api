@@ -24,13 +24,14 @@ export async function initialize() {
   db._initPromise = (async () => {
     try {
       const { host, port, user, password, database } = config.database;
-      console.log('DB initialize: host=', host, 'port=', port, 'database=', database);
+      const effectiveHost = host || '127.0.0.1';
+      console.log('DB initialize: host=', effectiveHost, 'port=', port, 'database=', database);
 
       db.status = { connected: false, error: 'initializing' };
 
       let connection;
       try {
-        connection = await mysql.createConnection({ host, port, user, password, connectTimeout: 5000 });
+        connection = await mysql.createConnection({ host: effectiveHost, port, user, password, connectTimeout: 5000 });
       } catch (e) {
         console.error('DB initialize failed at mysql.createConnection:', e);
         throw e;

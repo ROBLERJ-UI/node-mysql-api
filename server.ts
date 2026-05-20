@@ -9,10 +9,12 @@ import path from 'path';
 const app = express();
 
 app.get('/swagger.yaml', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.resolve(process.cwd(), 'swagger.yaml'));
 });
 
 app.get(['/api-docs', '/api-docs/'], (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>

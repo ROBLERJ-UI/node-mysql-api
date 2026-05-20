@@ -17,6 +17,10 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
+app.get(['/favicon.ico', '/favicon.png', '/favicon-16x16.png', '/favicon-32x32.png'], (req, res) => {
+  res.sendStatus(204);
+});
+
 app.use(cors({ origin: (origin, callback) => callback(null, true), credentials: true }));
 
 app.use((req, res, next) => {

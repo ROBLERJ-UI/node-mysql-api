@@ -21,8 +21,8 @@ async function initialize() {
         // Create DB if it doesn't exist
         await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
 
-        // Connect to DB
-        const sequelize = new Sequelize(database, user, password, { dialect: 'mysql', dialectModule: mysql2 });
+        // Connect to DB (include host and port so Sequelize doesn't default to localhost)
+        const sequelize = new Sequelize(database, user, password, { host, port, dialect: 'mysql', dialectModule: mysql2 });
 
         // Init models
         db.Account = accountModel(sequelize);

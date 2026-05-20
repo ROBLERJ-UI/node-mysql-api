@@ -4,4 +4,48 @@ info:
   version: 1.0.0
 servers:
   - url: http://localhost:4000
-paths: {}
+paths:
+  /health:
+    get:
+      summary: Get API health status
+      responses:
+        '200':
+          description: Server and database status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  db:
+                    type: object
+                    properties:
+                      connected:
+                        type: boolean
+                      error:
+                        type: string
+  /accounts/authenticate:
+    post:
+      summary: Authenticate a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: Authenticated successfully
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized

@@ -8,6 +8,29 @@ import path from 'path';
 
 const app = express();
 
+app.get(['/api-docs/swagger-ui.css', '/api-docs/swagger-ui-bundle.js', '/api-docs/swagger-ui-standalone-preset.js'], (req, res) => {
+  const cdnMap: Record<string, string> = {
+    '/api-docs/swagger-ui.css': 'https://unpkg.com/swagger-ui-dist@4/swagger-ui.css',
+    '/api-docs/swagger-ui-bundle.js': 'https://unpkg.com/swagger-ui-dist@4/swagger-ui-bundle.js',
+    '/api-docs/swagger-ui-standalone-preset.js': 'https://unpkg.com/swagger-ui-dist@4/swagger-ui-standalone-preset.js'
+  };
+
+  res.redirect(302, cdnMap[req.path]);
+});
+
+app.get('/api-docs/swagger-ui-init.js', (req, res) => {
+  res.type('application/javascript');
+  res.send(`window.onload = function() {
+    SwaggerUIBundle({
+      url: '/swagger.yaml',
+      dom_id: '#swagger-ui',
+      deepLinking: true,
+      presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+      layout: 'StandaloneLayout'
+    });
+  };`);
+});
+
 app.get('/swagger.yaml', (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.resolve(process.cwd(), 'swagger.yaml'));

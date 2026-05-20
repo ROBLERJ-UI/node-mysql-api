@@ -5,13 +5,16 @@ import cors from 'cors';
 import errorHandler from './_middleware/error-handler';
 import db, { initialize as initializeDb } from './_helpers/db';
 import swaggerUi from 'swagger-ui-express';
+import swaggerUiDist from 'swagger-ui-dist';
 import YAML from 'yamljs';
 import path from 'path';
 
 const app = express();
 const swaggerDocument = YAML.load(path.resolve(process.cwd(), 'swagger.yaml'));
+const swaggerUiAssetPath = swaggerUiDist.getAbsoluteFSPath();
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use('/api-docs', express.static(swaggerUiAssetPath, { index: false }));
+app.get(['/api-docs', '/api-docs/'], swaggerUi.setup(swaggerDocument));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());

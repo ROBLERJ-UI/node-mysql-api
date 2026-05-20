@@ -1,5 +1,6 @@
 import config from '../config';
 import mysql from 'mysql2/promise';
+import * as mysql2 from 'mysql2';
 import { Sequelize } from 'sequelize';
 import accountModel from '../accounts/account.model';
 import refreshTokenModel from '../accounts/refresh-token.model';
@@ -21,7 +22,7 @@ async function initialize() {
         await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
 
         // Connect to DB
-        const sequelize = new Sequelize(database, user, password, { dialect: 'mysql' });
+        const sequelize = new Sequelize(database, user, password, { dialect: 'mysql', dialectModule: mysql2 });
 
         // Init models
         db.Account = accountModel(sequelize);

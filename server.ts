@@ -36,7 +36,7 @@ app.get('/swagger.yaml', (req, res) => {
   res.sendFile(path.resolve(process.cwd(), 'swagger.yaml'));
 });
 
-app.get(['/api-docs', '/api-docs/'], (req, res) => {
+app.get('/docs', (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.send(`<!DOCTYPE html>
 <html lang="en">
@@ -64,6 +64,10 @@ app.get(['/api-docs', '/api-docs/'], (req, res) => {
 </html>`);
 });
 
+app.get(['/api-docs', '/api-docs/'], (req, res) => {
+  res.redirect(302, '/docs');
+});
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -75,7 +79,7 @@ app.get(['/favicon.ico', '/favicon.png', '/favicon-16x16.png', '/favicon-32x32.p
 app.use(cors({ origin: (origin, callback) => callback(null, true), credentials: true }));
 
 app.use((req, res, next) => {
-  if (req.path === '/') return res.redirect('/api-docs/');
+  if (req.path === '/') return res.redirect('/docs');
   next();
 });
 

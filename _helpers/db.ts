@@ -5,60 +5,85 @@ import { Sequelize } from 'sequelize';
 import accountModel from '../accounts/account.model';
 import refreshTokenModel from '../accounts/refresh-token.model';
 
-const db: any = {};
-export default db;
+const db: any = {
+  sequelize: null,
+  Account: null,
+  RefreshToken: null,
+  status: {
+    connected: false,
+    error: null
+  },
+  _initPromise: null
+};
 
-// initialize but don't let unhandled rejections crash the function; log instead
-initialize().catch((err: any) => console.error('DB initialize failed (unhandled):', err));
+export async function initialize() {
+  if (db._initPromise) {
+    return db._initPromise;
+  }
 
-async function initialize() {
+  db._initPromise = (async () => {
     try {
-        const { host, port, user, password, database } = config.database;
-        console.log('DB initialize: host=', host, 'port=', port, 'database=', database);
+      const { host, port, user, password, database } = config.database;
+      console.log('DB initialize: host=', host, 'port=', port, 'database=', database);
 
-        let connection;
-        try {
-            connection = await mysql.createConnection({ host, port, user, password });
-        } catch (e) {
-            console.error('DB initialize failed at mysql.createConnection:', e);
-            throw e;
-        }
+      db.status = { connected: false, error: 'initializing' };
 
-        try {
-            // Create DB if it doesn't exist
-            await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
-        } catch (e) {
-            console.error('DB initialize failed at connection.query(CREATE DATABASE):', e);
-            throw e;
-        }
+      let connection;
+      try {
+        connection = await mysql.createConnection({ host, port, user, password, connectTimeout: 5000 });
+      } catch (e) {
+        console.error('DB initialize failed at mysql.createConnection:', e);
+        throw e;
+      }
 
-        // Connect to DB (include host and port so Sequelize doesn't default to localhost)
-        let sequelize;
-        try {
-            sequelize = new Sequelize(database, user, password, { host, port, dialect: 'mysql', dialectModule: mysql2 });
-        } catch (e) {
-            console.error('DB initialize failed constructing Sequelize:', e);
-            throw e;
-        }
+      try {
+        await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
+      } catch (e) {
+        console.error('DB initialize failed at connection.query(CREATE DATABASE):', e);
+        throw e;
+      }
 
-        try {
-            // Init models
-            db.Account = accountModel(sequelize);
-            db.RefreshToken = refreshTokenModel(sequelize);
+      let sequelize;
+      try {
+        sequelize = new Sequelize(database, user, password, {
+          host,
+          port,
+          dialect: 'mysql',
+          dialectModule: mysql2,
+          logging: false
+        });
+      } catch (e) {
+        console.error('DB initialize failed constructing Sequelize:', e);
+        throw e;
+      }
 
-            // Define relationships
-            db.Account.hasMany(db.RefreshToken, { onDelete: 'CASCADE' });
-            db.RefreshToken.belongsTo(db.Account);
+      try {
+        db.Account = accountModel(sequelize);
+        db.RefreshToken = refreshTokenModel(sequelize);
 
-            // Sync models with database
-            await sequelize.sync();
-            console.log('DB initialized and synced');
-        } catch (e) {
-            console.error('DB initialize failed during sequelize.sync or model init:', e);
-            throw e;
-        }
+        db.Account.hasMany(db.RefreshToken, { onDelete: 'CASCADE' });
+        db.RefreshToken.belongsTo(db.Account);
+
+        await sequelize.sync();
+        db.sequelize = sequelize;
+        db.status = { connected: true, error: null };
+        console.log('DB initialized and synced');
+      } catch (e) {
+        console.error('DB initialize failed during sequelize.sync or model init:', e);
+        db.status = { connected: false, error: e && e.message ? e.message : String(e) };
+        throw e;
+      }
+
+      return db;
     } catch (err) {
-        console.error('DB initialize error (final):', err && err.stack ? err.stack : err);
-        // Do not rethrow to avoid crashing serverless function startup
+      db._initPromise = null;
+      console.error('DB initialize error (final):', err && err.stack ? err.stack : err);
+      db.status = { connected: false, error: err && err.message ? err.message : String(err) };
+      throw err;
     }
+  })();
+
+  return db._initPromise;
 }
+
+export default db;

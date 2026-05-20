@@ -3,13 +3,13 @@ import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import errorHandler from './_middleware/error-handler';
-import accountsController from './accounts/accounts.controller';
+import db, { initialize as initializeDb } from './_helpers/db';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import path from 'path';
 
 const app = express();
-const swaggerDocument = YAML.load(path.join(__dirname, './swagger.yaml'));
+const swaggerDocument = YAML.load(path.resolve(process.cwd(), 'swagger.yaml'));
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
@@ -24,16 +24,30 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/accounts', accountsController);
+let accountsController: any;
+app.use('/accounts', async (req, res, next) => {
+  if (!accountsController) {
+    const mod = await import('./accounts/accounts.controller');
+    accountsController = mod.default;
+  }
 
+  try {
+    await initializeDb();
+  } catch (err) {
+    return next(err);
+  }
 
+  return accountsController(req, res, next);
+});
+
+app.get('/health', (req, res) => {
+  res.json({
+    ok: true,
+    db: db.status
+  });
+});
 
 app.use(errorHandler);
-
-app.use(cors({ 
-  origin: process.env.CORS_ORIGIN || 'http://localhost:4200', 
-  credentials: true 
-}));
 
 // Only listen locally, NOT on Vercel
 if (process.env.NODE_ENV !== 'production') {

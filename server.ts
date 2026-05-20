@@ -8,9 +8,10 @@ import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import path from 'path';
 
+const app = express();
 const swaggerDocument = YAML.load(path.join(__dirname, './swagger.yaml'));
 
-const app = express();
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -25,9 +26,7 @@ app.use((req, res, next) => {
 
 app.use('/accounts', accountsController);
 
-app.get('/api-docs', swaggerUi.setup(swaggerDocument));
-app.get('/api-docs/', swaggerUi.setup(swaggerDocument));
-app.use('/api-docs', swaggerUi.serve);
+
 
 app.use(errorHandler);
 

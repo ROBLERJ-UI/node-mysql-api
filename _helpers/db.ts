@@ -16,27 +16,49 @@ async function initialize() {
         const { host, port, user, password, database } = config.database;
         console.log('DB initialize: host=', host, 'port=', port, 'database=', database);
 
-        const connection = await mysql.createConnection({ host, port, user, password });
+        let connection;
+        try {
+            connection = await mysql.createConnection({ host, port, user, password });
+        } catch (e) {
+            console.error('DB initialize failed at mysql.createConnection:', e);
+            throw e;
+        }
 
-        // Create DB if it doesn't exist
-        await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
+        try {
+            // Create DB if it doesn't exist
+            await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
+        } catch (e) {
+            console.error('DB initialize failed at connection.query(CREATE DATABASE):', e);
+            throw e;
+        }
 
         // Connect to DB (include host and port so Sequelize doesn't default to localhost)
-        const sequelize = new Sequelize(database, user, password, { host, port, dialect: 'mysql', dialectModule: mysql2 });
+        let sequelize;
+        try {
+            sequelize = new Sequelize(database, user, password, { host, port, dialect: 'mysql', dialectModule: mysql2 });
+        } catch (e) {
+            console.error('DB initialize failed constructing Sequelize:', e);
+            throw e;
+        }
 
-        // Init models
-        db.Account = accountModel(sequelize);
-        db.RefreshToken = refreshTokenModel(sequelize);
+        try {
+            // Init models
+            db.Account = accountModel(sequelize);
+            db.RefreshToken = refreshTokenModel(sequelize);
 
-        // Define relationships
-        db.Account.hasMany(db.RefreshToken, { onDelete: 'CASCADE' });
-        db.RefreshToken.belongsTo(db.Account);
+            // Define relationships
+            db.Account.hasMany(db.RefreshToken, { onDelete: 'CASCADE' });
+            db.RefreshToken.belongsTo(db.Account);
 
-        // Sync models with database
-        await sequelize.sync();
-        console.log('DB initialized and synced');
+            // Sync models with database
+            await sequelize.sync();
+            console.log('DB initialized and synced');
+        } catch (e) {
+            console.error('DB initialize failed during sequelize.sync or model init:', e);
+            throw e;
+        }
     } catch (err) {
-        console.error('DB initialize error:', err && err.message ? err.message : err);
+        console.error('DB initialize error (final):', err && err.stack ? err.stack : err);
         // Do not rethrow to avoid crashing serverless function startup
     }
 }

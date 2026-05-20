@@ -5,6 +5,7 @@ import cors from 'cors';
 import errorHandler from './_middleware/error-handler';
 import db, { initialize as initializeDb } from './_helpers/db';
 import path from 'path';
+import YAML from 'yamljs';
 
 const app = express();
 
@@ -28,7 +29,7 @@ app.get(['/api-docs', '/api-docs/'], (req, res) => {
   <script>
     window.onload = function() {
       SwaggerUIBundle({
-        url: '/swagger.yaml',
+        url: '/api-docs/swagger.json',
         dom_id: '#swagger-ui',
         deepLinking: true,
         presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
@@ -43,6 +44,19 @@ app.get(['/api-docs', '/api-docs/'], (req, res) => {
 app.get('/swagger.yaml', (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.resolve(process.cwd(), 'swagger.yaml'));
+});
+
+// Serve a runtime JSON version of the swagger spec with the server URL set to the current host
+app.get('/api-docs/swagger.json', (req, res) => {
+  try {
+    const swaggerDoc = YAML.load(path.resolve(process.cwd(), 'swagger.yaml'));
+    const hostUrl = `${req.protocol}://${req.get('host')}`;
+    swaggerDoc.servers = [{ url: hostUrl, description: `${req.get('host')} - ${process.env.NODE_ENV !== 'production' ? 'Local development server' : 'Production server (Vercel)'}` }];
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.json(swaggerDoc);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load swagger.yaml' });
+  }
 });
 
 app.get(['/docs', '/'], (req, res) => {

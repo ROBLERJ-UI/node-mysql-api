@@ -4,8 +4,10 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import errorHandler from './_middleware/error-handler';
 import accountsController from './accounts/accounts.controller';
-import swaggerDocs from './_helpers/swagger';
+import swaggerUi from 'swagger-ui-express';
+import YAML from 'yamljs';
 
+const swaggerDocument = YAML.load('./swagger.yaml');
 const app = express();
 
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -16,10 +18,16 @@ app.use(cookieParser());
 app.use(cors({ origin: (origin, callback) => callback(null, true), credentials: true }));
 
 // api routes
+app.use((req, res, next) => {
+  if (req.path === '/') return res.redirect('/api-docs/');
+  next();
+});
 app.use('/accounts', accountsController);
 
 // swagger docs route
-app.use('/api-docs', swaggerDocs);
+app.get('/api-docs', swaggerUi.setup(swaggerDocument));
+app.get('/api-docs/', swaggerUi.setup(swaggerDocument));
+app.use('/api-docs', swaggerUi.serve);
 
 // global error handler
 app.use(errorHandler);

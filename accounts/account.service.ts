@@ -114,7 +114,7 @@ async function validateResetToken({ token }: any) {
     const account = await db.Account.findOne({
         where: {
             resetToken: token,
-            resetTokenExpires: { [Op.gt]: Date.now() }
+            resetTokenExpires: { [Op.gt]: new Date() }
         }
     });
 
@@ -122,7 +122,6 @@ async function validateResetToken({ token }: any) {
 
     return account;
 }
-
 async function resetPassword({ token, password }: any) {
     const account = await validateResetToken({ token });
 

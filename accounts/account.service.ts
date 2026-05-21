@@ -105,7 +105,10 @@ async function forgotPassword({ email }: any, origin: any) {
 
     account.resetToken = randomTokenString();
     account.resetTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    
+    console.log('Saving reset token:', account.resetToken);
     await account.save();
+    console.log('Reset token saved, sending email...');
 
     await sendPasswordResetEmail(account, origin);
 }

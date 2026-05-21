@@ -50,7 +50,7 @@ app.get('/swagger.yaml', (req, res) => {
 app.get('/api-docs/swagger.json', (req, res) => {
   try {
     const swaggerDoc = YAML.load(path.resolve(process.cwd(), 'swagger.yaml'));
-    const hostUrl = `${req.protocol}://${req.get('host')}`;
+    const hostUrl = `https://${req.get('host')}`;
     swaggerDoc.servers = [{ url: hostUrl, description: `${req.get('host')} - ${process.env.NODE_ENV !== 'production' ? 'Local development server' : 'Production server (Vercel)'}` }];
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.json(swaggerDoc);

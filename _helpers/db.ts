@@ -52,6 +52,7 @@ export async function initialize() {
           dialect: 'mysql',
           dialectModule: mysql2,
           logging: false
+          timezone: '+00:00'
         });
       } catch (e) {
         console.error('DB initialize failed constructing Sequelize:', e);
